@@ -1,106 +1,54 @@
-// script.js
+const express = require("express");
+const multer = require("multer");
+const cors = require("cors");
+const path = require("path");
 
-// API URL (backend serveringiz manzili, masalan Node.js yoki PHP)
-// localhost:3000 yoki hostingdagi domeningizni yozasiz
-const API_URL = "http://localhost:3000";
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-// Elementlarni tanlab olish
-const loginForm = document.getElementById("login-form");
-const imageUploadForm = document.getElementById("image-upload-form");
-const imageInput = document.getElementById("image-input");
-const dateInput = document.getElementById("date-input");
-const gallery = document.getElementById("gallery");
-const adminPanel = document.getElementById("admin-panel");
-
-// Token (admin sessiyasini saqlash uchun)
-let authToken = localStorage.getItem("authToken") || null;
-
-// --- Admin login ---
-if (loginForm) {
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const password = document.getElementById("password").value;
-
-    try {
-      const res = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        authToken = data.token;
-        localStorage.setItem("authToken", authToken);
-        alert("Admin sifatida kirdingiz!");
-        loginForm.style.display = "none";
-        adminPanel.style.display = "block";
-      } else {
-        alert("Parol noto‘g‘ri!");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Serverga ulanishda xatolik!");
-    }
-  });
-}
-
-// --- Rasm va sana yuklash ---
-if (imageUploadForm) {
-  imageUploadForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData();
-    formData.append("image", imageInput.files[0]);
-    formData.append("date", dateInput.value);
-
-    try {
-      const res = await fetch(`${API_URL}/upload`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        alert("Rasm muvaffaqiyatli yuklandi!");
-        loadGallery(); // galereyani qayta yuklash
-      } else {
-        alert("Xatolik: " + data.message);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Server bilan muammo!");
-    }
-  });
-}
-
-// --- Galereyani yuklash ---
-async function loadGallery() {
-  try {
-    const res = await fetch(`${API_URL}/gallery`);
-    const images = await res.json();
-
-    gallery.innerHTML = "";
-    images.forEach((item) => {
-      const div = document.createElement("div");
-      div.classList.add("gallery-item");
-
-      div.innerHTML = `
-        <img src="${API_URL}/uploads/${item.filename}" alt="Rasm" />
-        <p>${item.date}</p>
-      `;
-
-      gallery.appendChild(div);
-    });
-  } catch (err) {
-    console.error(err);
+// Fayllar saqlanadigan joy
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
   }
-}
+});
+const upload = multer({ storage });
 
-// Sayt ochilganda galereyani yuklash
-loadGallery();
+// Static uploads papkasini ko‘rsatish
+app.use("/uploads", express.static("uploads"));
+
+// Login (oddiy)
+app.post("/login", (req, res) => {
+  const { password } = req.body;
+  if (password === "1234") {
+    return res.json({ success: true, token: "FAKE_TOKEN" });
+  }
+  res.json({ success: false, message: "Noto‘g‘ri parol" });
+});
+
+// Rasm yuklash
+app.post("/upload", upload.single("image"), (req, res) => {
+  const date = req.body.date;
+  res.json({
+    success: true,
+    filename: req.file.filename,
+    date: date
+  });
+});
+
+// Galereya (oddiy misol uchun faqat bitta rasm qaytaradi)
+app.get("/gallery", (req, res) => {
+  res.json([
+    { filename: "demo.jpg", date: "2025-09-20" }
+  ]);
+});
+
+// 🔴 Render majburiy port
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server ${PORT} portida ishlayapti`);
+});
