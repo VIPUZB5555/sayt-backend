@@ -40,6 +40,11 @@ app.post("/upload", upload.single("image"), (req, res) => {
   });
 });
 
+app.get("/", (req, res) => {
+  res.send("Backend server ishlayapti 🚀");
+});
+
+
 // Galereya (oddiy misol uchun faqat bitta rasm qaytaradi)
 app.get("/gallery", (req, res) => {
   res.json([
@@ -52,3 +57,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server ${PORT} portida ishlayapti`);
 });
+
