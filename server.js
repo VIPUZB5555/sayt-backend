@@ -2,7 +2,7 @@
 
 // API URL (backend serveringiz manzili, masalan Node.js yoki PHP)
 // localhost:3000 yoki hostingdagi domeningizni yozasiz
-const API_URL = "http://localhost:3000";
+const API_URL = "https://sayt-backend.onrender.com";
 
 // Elementlarni tanlab olish
 const loginForm = document.getElementById("login-form");
@@ -104,3 +104,4 @@ async function loadGallery() {
 
 // Sayt ochilganda galereyani yuklash
 loadGallery();
+
